@@ -28,8 +28,9 @@ function run(action) {
   } catch (error) {
     log(`ERROR: ${error instanceof Error ? error.message : String(error)}`);
   }
+}
 
-  async function showQr(text) {
+async function showQr(text) {
     required(text, 'Create the envelope first');
     $('qr-section').hidden = false;
     $('qr-canvas').hidden = false;
@@ -37,7 +38,7 @@ function run(action) {
     await QRCode.toCanvas($('qr-canvas'), text, { width: 360, margin: 2 });
   }
 
-  async function scanQr(targetId) {
+async function scanQr(targetId) {
     $('qr-section').hidden = false;
     $('qr-canvas').hidden = true;
     $('scanner').hidden = false;
@@ -57,14 +58,13 @@ function run(action) {
     );
   }
 
-  async function closeScanner() {
+async function closeScanner() {
     if (scanner) {
       await scanner.stop();
       scanner.clear();
       scanner = undefined;
     }
     $('qr-section').hidden = true;
-  }
 }
 
 function device1Setup() {

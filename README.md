@@ -122,6 +122,46 @@ The proof establishes that Browser 2 knows the private key associated with
 Browser 1's trusted public key. It does not prove who is physically operating
 the browser, so the user must authorize initial setup and pairing.
 
+### Identity lifecycle in the web app
+
+Device 1 must create the identity only once, during first-time application
+setup when the user creates the passphrase. Do not generate a new identity on
+every application launch:
+
+```ts
+const salt = localStorage.getItem('identity-salt');
+
+if (salt === null) {
+  const created = deriveKeyFromPassphrase(firstPassphrase);
+  localStorage.setItem('identity-salt', created.salt);
+  localStorage.setItem('identity-public-key', base64url.encode(created.keyPair.publicKey));
+  // Store the private key encrypted; do not store the passphrase.
+}
+```
+
+On subsequent launches, ask the user for the passphrase, load the stored salt,
+and derive the same keypair:
+
+```ts
+const storedSalt = localStorage.getItem('identity-salt');
+const storedPublicKey = localStorage.getItem('identity-public-key');
+if (!storedSalt || !storedPublicKey) {
+  throw new Error('Identity setup is incomplete');
+}
+
+const unlocked = deriveKeyFromPassphrase(passphrase, { salt: storedSalt });
+const publicKey = base64url.encode(unlocked.keyPair.publicKey);
+if (publicKey !== storedPublicKey) {
+  throw new Error('Incorrect passphrase');
+}
+```
+
+The application may use the passphrase it already collected for unlocking the
+app, but it should not persist that passphrase in `localStorage`. Store the
+salt and public key, and keep the passphrase and decrypted private key in
+memory only where possible. A new salt or passphrase creates a different
+identity and will no longer match previously paired devices.
+
 ### Recommended pairing flow
 
 1. Browser 2 creates a fresh unpredictable challenge and sends a pairing
@@ -231,6 +271,7 @@ appropriate.
 - **Devices share the same identity private key (v1).** Multi-device synchronisation via the key-transfer mechanism or passphrase derivation.
 - **Hidden commitments are not proven until opened.** The `HiddenCommitment` envelope proves the prover's *identity* at commit time but does **not** prove the JSON content until `verifyOpenedCommitment` is called with the opening key.
 - **Passphrase-derived keys require the salt.** Store `DerivedKeyResult.salt` alongside the user record; without it the key cannot be re-derived.
+- **Never persist the passphrase in `localStorage`.** Ask for it when unlocking the app, then derive or decrypt the identity key in memory.
 - **Key-transfer payloads are single-use.** Generate a fresh payload for each transfer; do not reuse passwords across transfers.
 - **Use a fresh verifier challenge.** Pass `{ challenge }` to proof creation and verification. If no challenge is supplied, the API supports legacy self-contained proofs that are replayable and must not be used for device authentication.
 

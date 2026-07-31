@@ -28,6 +28,19 @@
     </p>
 
     <section>
+      <h2>How to test</h2>
+      <ol>
+        <li>Open this page in two separate browsers (for example Chrome and Firefox).</li>
+        <li>In Browser 1, create the identity, create sample data, and create a pairing request.</li>
+        <li>Copy Browser 1's pairing request into Browser 2, then create a proof.</li>
+        <li>Copy Browser 2's proof response into Browser 1 and verify Device 2.</li>
+        <li>Export data in Browser 1, then paste the encrypted export into Browser 2.</li>
+        <li>Decrypt and import the data in Browser 2.</li>
+      </ol>
+      <p>Use the same passphrase in both browsers. Copy/paste simulates QR or local transport.</p>
+    </section>
+
+    <section>
       <h2>Device 1 — trusted source</h2>
       <button id="device1-setup">Create Device 1 identity</button>
       <button id="device1-data">Create sample data</button>

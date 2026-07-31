@@ -36,6 +36,17 @@ windows). Use the same passphrase in both. Perform these steps:
 5. In Browser 1, click **Export data after trust**.
 6. Copy the encrypted export into Browser 2 and click **Decrypt and import data**.
 
+Do not use two ordinary tabs in the same browser when testing isolation:
+same-browser tabs normally share the same origin storage. Two separate
+browsers or separate private browsing sessions provide independent storage.
+The data must be copied manually between the labeled text areas:
+
+| Envelope | Copy from | Paste into |
+|---|---|---|
+| Pairing request | Browser 1: **Pairing request** | Browser 2: **Pairing request from Device 1** |
+| Proof response | Browser 2: **Proof response** | Browser 1: **Proof response from Device 2** |
+| Data export | Browser 1: **Encrypted data export** | Browser 2: **Encrypted data export from Device 1** |
+
 The demo uses copy/paste as a stand-in for QR codes or a local pairing
 channel. It exercises separate browser LocalStorage instances, passphrase
 derivation, challenge-bound proof generation and verification, and an

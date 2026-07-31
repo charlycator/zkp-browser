@@ -271,6 +271,51 @@ appropriate.
 
 ## Per-device identity (v2)
 
+### Which model should your application use?
+
+There are two different meanings of “same user” in this library:
+
+| Mode | How devices are recognized | Same passphrase required? | Main trade-off |
+|---|---|---:|---|
+| **v1 shared identity** | Every device has the same private key | **Yes** | Simple, but one leaked device key affects every device |
+| **v2 per-device identity** | Device 1 approves each device key with a root key | **No** | Safer isolation, but every new device requires approval |
+
+For a multi-device web app where one user wants to access the same data without
+a backend, **v2 is recommended**. The passphrase protects and unlocks the root
+identity on Device 1; it is not copied to Device 2. Device 2 can use a
+different local passphrase to protect its own private key.
+
+The important security statement is:
+
+> A successful v2 proof means “this device owns a key previously approved by
+> the trusted Device 1,” not “the browser proved the user's real-world
+> identity.”
+
+There is no centralized login, server, or database in this model. Device 1 is
+the initial trust anchor, and the user must approve each new device. After
+verification, the web app—not this library—must send selected data through an
+authenticated encrypted transfer and store it in Device 2's LocalStorage.
+
+### What happens when the web app opens?
+
+On Device 1, create the root identity only once during first-time setup. Ask
+for the user's passphrase on later launches and use it to unlock the encrypted
+root private key. Never generate a new root identity on every launch and never
+store the passphrase as plaintext in LocalStorage.
+
+On a new Device 2:
+
+1. Generate a new device keypair locally.
+2. Send the device public key to Device 1 by QR code, copy/paste, or another
+   local channel.
+3. Device 1 asks the user to approve the device and signs a delegation.
+4. Send the signed delegation back to Device 2.
+5. Store the device private key and delegation on Device 2.
+6. For each future data request, Device 1 sends a fresh challenge.
+7. Device 2 returns the delegation and a proof of its own private key.
+8. Device 1 verifies the proof, checks revocation, and transfers data only
+   after success.
+
 v2 adds a backward-compatible per-device identity mode. Instead of copying the
 same private key to every device, Device 1 keeps a long-term **Ed25519 root
 key** and signs a **delegation** for each device's own **Ristretto255** key.

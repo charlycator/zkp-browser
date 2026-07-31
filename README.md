@@ -13,6 +13,31 @@ Works in Node.js (16+) and modern browsers. Ships as both CommonJS (`dist/index.
 - [API reference](#api-reference)
 - [Quick start](#quick-start)
 - [Security notes and caveats](#security-notes-and-caveats)
+- [Running the browser demo](#running-the-browser-demo)
+
+---
+
+## Running the browser demo
+
+Build and serve the demo locally:
+
+```bash
+npm install
+npm run demo
+```
+
+Open <http://localhost:4173/demo/>. Click the buttons in this order:
+
+1. **Create Device 1 identity**
+2. **Create sample Device 1 data**
+3. **Ask Device 1 to trust Device 2**
+4. **Transfer data after trust**
+
+The demo simulates two devices using `demo:device1:*` and `demo:device2:*`
+LocalStorage prefixes in one browser. It exercises passphrase derivation,
+challenge-bound proof generation and verification, and post-verification JSON
+transfer. It does not simulate QR encoding or WebRTC. Those are application
+transport layers that should be added for a real multi-device deployment.
 
 ---
 

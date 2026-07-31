@@ -299,6 +299,12 @@ function v2CreateProof() {
   if (challengeEnvelope.version !== 2 || challengeEnvelope.type !== 'device-challenge') {
     throw new Error('Invalid v2 challenge envelope')
   }
+  const rootPublicKey = base64url.decode(
+    required(localStorage.getItem(`${V2_ROOT}publicKey`), 'Create the v2 root identity first'),
+  )
+  if (!verifyDeviceDelegation(rootPublicKey, delegation)) {
+    throw new Error('Device 2 rejected the delegation')
+  }
   const proof = createDeviceProof(
     devicePrivateKey,
     delegation,
@@ -338,7 +344,14 @@ $('v2-device-setup').addEventListener('click', () => run(v2DeviceSetup))
 $('v2-enrollment-request').addEventListener('click', () => run(v2EnrollmentRequest))
 $('v2-sign-delegation').addEventListener('click', () => run(v2SignDelegation))
 $('v2-challenge').addEventListener('click', () => run(v2CreateChallenge))
-$('v2-verify-delegation').addEventListener('click', () => run(v2VerifyDelegationOnDevice))
 $('v2-create-proof').addEventListener('click', () => run(v2CreateProof))
 $('v2-verify-proof').addEventListener('click', () => run(v2VerifyProof))
+$('v2-request-qr').addEventListener('click', () => run(() => showQr($('v2-request').value)))
+$('v2-request-scan').addEventListener('click', () => run(() => scanQr('v2-request-input')))
+$('v2-delegation-qr').addEventListener('click', () => run(() => showQr($('v2-delegation').value)))
+$('v2-delegation-scan').addEventListener('click', () => run(() => scanQr('v2-delegation-input')))
+$('v2-challenge-qr').addEventListener('click', () => run(() => showQr($('v2-challenge-value').value)))
+$('v2-challenge-scan').addEventListener('click', () => run(() => scanQr('v2-challenge-input')))
+$('v2-proof-qr').addEventListener('click', () => run(() => showQr($('v2-proof').value)))
+$('v2-proof-scan').addEventListener('click', () => run(() => scanQr('v2-proof-input')))
 $('close-scanner').addEventListener('click', () => run(closeScanner))

@@ -86,15 +86,15 @@
       <h2>Per-Device Identity (v2)</h2>
       <p>
         This flow keeps the Ed25519 root key on Device 1 and delegates a unique
-        Ristretto255 key to Device 2. Exchange the JSON envelopes below with
-        copy/paste or QR, in order.
+        Ristretto255 key to Device 2. Use the QR buttons to exchange envelopes;
+        copy/paste remains available as a fallback.
       </p>
       <ol>
         <li>Device 1 creates the root identity once.</li>
-        <li>Device 2 creates its own device key and sends an enrollment request.</li>
-        <li>Device 1 signs a delegation for that device key.</li>
-        <li>Device 2 stores the signed delegation, then creates a challenge-bound proof.</li>
-        <li>Device 1 verifies the delegation signature and the device proof.</li>
+        <li>Device 2 creates its own device key and shows an enrollment QR.</li>
+        <li>Device 1 scans it, signs a delegation, and shows a delegation QR.</li>
+        <li>Device 2 scans the delegation, then scans a challenge from Device 1.</li>
+        <li>Device 2 shows a proof QR; Device 1 scans and verifies it.</li>
       </ol>
 
       <h3>Step 1 — Root setup on Device 1</h3>
@@ -112,6 +112,8 @@
       <label>Enrollment request from Device 2 to Device 1
         <textarea id="v2-request" readonly></textarea>
       </label>
+      <button id="v2-request-qr">Show enrollment QR</button>
+      <button id="v2-request-scan">Scan enrollment QR</button>
 
       <h3>Step 3 — Device 1 signs delegation</h3>
       <label>Enrollment request pasted into Device 1
@@ -121,23 +123,28 @@
       <label>Signed delegation from Device 1 to Device 2
         <textarea id="v2-delegation" readonly></textarea>
       </label>
+      <button id="v2-delegation-qr">Show delegation QR</button>
+      <button id="v2-delegation-scan">Scan delegation QR</button>
 
       <h3>Step 4 — Authentication challenge and proof</h3>
       <button id="v2-challenge">Create verifier challenge</button>
       <label>Challenge from Device 1 to Device 2
         <textarea id="v2-challenge-value" readonly></textarea>
       </label>
+      <button id="v2-challenge-qr">Show challenge QR</button>
+      <button id="v2-challenge-scan">Scan challenge QR</button>
       <label>Delegation pasted into Device 2
         <textarea id="v2-delegation-input"></textarea>
       </label>
       <label>Challenge pasted into Device 2
         <textarea id="v2-challenge-input"></textarea>
       </label>
-      <button id="v2-verify-delegation">Verify delegation on Device 2</button>
       <button id="v2-create-proof">Create device proof</button>
       <label>Device proof from Device 2 to Device 1
         <textarea id="v2-proof" readonly></textarea>
       </label>
+      <button id="v2-proof-qr">Show proof QR</button>
+      <button id="v2-proof-scan">Scan proof QR</button>
 
       <h3>Step 5 — Verification on Device 1</h3>
       <label>Device proof pasted into Device 1

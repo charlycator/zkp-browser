@@ -421,8 +421,10 @@ import {
 ### Demo note
 
 The original browser pairing flow in the demo is **v1** (shared identity via
-passphrase-derived pairing). The new **Per-Device Identity (v2)** section shows
-root-key delegation and challenge-bound device proofs.
+passphrase-derived pairing). The **Per-Device Identity (v2)** section shows
+root-key delegation and challenge-bound device proofs. Its enrollment request,
+delegation, challenge, and proof can all be exchanged with QR buttons, so
+copy/paste is only a fallback.
 
 ---
 

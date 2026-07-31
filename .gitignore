@@ -3,6 +3,7 @@
 
 /node_modules
 /dist
+/demo/dist
 .DS_Store
 .idea/
 npm-debug.log*

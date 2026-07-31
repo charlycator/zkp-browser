@@ -47,11 +47,13 @@ The data must be copied manually between the labeled text areas:
 | Proof response | Browser 2: **Proof response** | Browser 1: **Proof response from Device 2** |
 | Data export | Browser 1: **Encrypted data export** | Browser 2: **Encrypted data export from Device 1** |
 
-The demo uses copy/paste as a stand-in for QR codes or a local pairing
-channel. It exercises separate browser LocalStorage instances, passphrase
-derivation, challenge-bound proof generation and verification, and an
-AES-GCM-encrypted JSON transfer. It does not implement QR encoding or WebRTC;
-those are application transport layers for production deployment.
+The demo supports both copy/paste and QR codes. Use **Show pairing QR** and
+**Show proof QR** to display envelopes, or use the scan buttons to read them
+with the camera. Camera access requires `localhost` or HTTPS and browser
+permission. The demo exercises separate browser LocalStorage instances,
+passphrase derivation, challenge-bound proof generation and verification, and
+an AES-GCM-encrypted JSON transfer. WebRTC is not included; it is an
+alternative transport for production deployment.
 
 ---
 

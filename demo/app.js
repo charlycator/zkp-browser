@@ -4,10 +4,13 @@ import {
   proveDisclosedJson,
   verifyDisclosedJson,
 } from '../dist/index.mjs';
+import QRCode from 'qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 
 const DEVICE_1 = 'demo:device1:';
 const DEVICE_2 = 'demo:device2:';
 const $ = (id) => document.querySelector(`#${id}`);
+let scanner;
 
 function log(message) {
   $('status').textContent += `\n${message}`;
@@ -24,6 +27,43 @@ function run(action) {
     if (result instanceof Promise) result.catch((error) => log(`ERROR: ${error.message}`));
   } catch (error) {
     log(`ERROR: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  async function showQr(text) {
+    required(text, 'Create the envelope first');
+    $('qr-section').hidden = false;
+    $('qr-canvas').hidden = false;
+    $('scanner').hidden = true;
+    await QRCode.toCanvas($('qr-canvas'), text, { width: 360, margin: 2 });
+  }
+
+  async function scanQr(targetId) {
+    $('qr-section').hidden = false;
+    $('qr-canvas').hidden = true;
+    $('scanner').hidden = false;
+    scanner = new Html5Qrcode('scanner');
+    await scanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      async (decodedText) => {
+        $(targetId).value = decodedText;
+        await scanner.stop();
+        scanner.clear();
+        scanner = undefined;
+        $('qr-section').hidden = true;
+        log(`QR scanned into ${targetId}.`);
+      },
+      () => {},
+    );
+  }
+
+  async function closeScanner() {
+    if (scanner) {
+      await scanner.stop();
+      scanner.clear();
+      scanner = undefined;
+    }
+    $('qr-section').hidden = true;
   }
 }
 
@@ -165,7 +205,12 @@ async function device2Import() {
 $('device1-setup').addEventListener('click', () => run(device1Setup));
 $('device1-data').addEventListener('click', () => run(device1Data));
 $('device1-request').addEventListener('click', () => run(device1PairingRequest));
+$('device1-request-qr').addEventListener('click', () => run(() => showQr($('pairing-request').value)));
+$('device1-proof-scan').addEventListener('click', () => run(() => scanQr('proof-response')));
 $('device2-prove').addEventListener('click', () => run(device2CreateProof));
+$('device2-request-scan').addEventListener('click', () => run(() => scanQr('pairing-input')));
+$('device2-proof-qr').addEventListener('click', () => run(() => showQr($('proof-output').value)));
 $('device1-verify').addEventListener('click', () => run(device1Verify));
 $('device1-export').addEventListener('click', () => run(device1Export));
 $('device2-import').addEventListener('click', () => run(device2Import));
+$('close-scanner').addEventListener('click', () => run(closeScanner));

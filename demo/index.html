@@ -10,6 +10,8 @@
       button { cursor: pointer; margin: .25rem .5rem .25rem 0; padding: .5rem .75rem; }
       textarea { box-sizing: border-box; min-height: 120px; width: 100%; }
       input { max-width: 100%; }
+      canvas { display: block; margin: .5rem 0; }
+      #scanner { background: #111; max-width: 480px; padding: .5rem; }
       pre { background: #f4f4f4; padding: .75rem; border-radius: 4px; overflow: auto; white-space: pre-wrap; }
       .warning { color: #8a4b00; }
       [hidden] { display: none; }
@@ -48,9 +50,11 @@
       <label>Pairing request to copy into Device 2
         <textarea id="pairing-request" readonly></textarea>
       </label>
+      <button id="device1-request-qr">Show pairing QR</button>
       <label>Proof response from Device 2
         <textarea id="proof-response"></textarea>
       </label>
+      <button id="device1-proof-scan">Scan proof QR</button>
       <button id="device1-verify">Verify Device 2</button>
       <label>Encrypted data export to copy into Device 2
         <textarea id="data-export" readonly></textarea>
@@ -66,20 +70,29 @@
       <label>Pairing request from Device 1
         <textarea id="pairing-input"></textarea>
       </label>
+      <button id="device2-request-scan">Scan pairing QR</button>
       <button id="device2-prove">Create proof</button>
       <label>Proof response to copy into Device 1
         <textarea id="proof-output" readonly></textarea>
       </label>
+      <button id="device2-proof-qr">Show proof QR</button>
       <label>Encrypted data export from Device 1
         <textarea id="export-input"></textarea>
       </label>
       <button id="device2-import">Decrypt and import data</button>
     </section>
 
+    <section id="qr-section" hidden>
+      <h2>QR tools</h2>
+      <canvas id="qr-canvas"></canvas>
+      <div id="scanner"></div>
+      <button id="close-scanner">Close scanner</button>
+    </section>
+
     <section>
       <h2>Log</h2>
       <pre id="status">Ready.</pre>
     </section>
-    <script type="module" src="./app.js"></script>
+    <script type="module" src="./dist/app.mjs"></script>
   </body>
 </html>

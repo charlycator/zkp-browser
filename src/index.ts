@@ -12,6 +12,11 @@ export type {
   PassphraseKeyOptions,
   DerivedKeyResult,
   JsonProofOptions,
+  RootKeyPair,
+  DelegationPayload,
+  DeviceDelegation,
+  DeviceDelegationOptions,
+  DeviceProof,
 } from './types';
 
 export {
@@ -20,6 +25,7 @@ export {
   InvalidProofError,
   InvalidCommitmentError,
   InvalidPayloadError,
+  InvalidDelegationError,
 } from './errors';
 
 export {
@@ -41,3 +47,13 @@ export {
 export { base64url, canonicalJson } from './utils';
 
 export { parseJsonFile, parseJsonDocument } from './json-input';
+
+export {
+  generateRootKeyPair,
+  generateDeviceKeyPair,
+  createDeviceDelegation,
+  verifyDeviceDelegation,
+  createDeviceProof,
+  verifyDeviceProof,
+  isDelegationRevoked,
+} from './delegation';

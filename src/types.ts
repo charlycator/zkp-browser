@@ -117,3 +117,86 @@ export interface JsonProofOptions {
    */
   challenge?: Uint8Array;
 }
+
+// ── v2 Per-Device Identity ──────────────────────────────────────────────────
+
+/** Ed25519 root key pair for v2 per-device identity mode. */
+export interface RootKeyPair {
+  /** 32-byte Ed25519 private key seed — keep secret; never send to devices */
+  privateKey: Uint8Array;
+  /** 32-byte Ed25519 public key — distribute as the trusted root identity */
+  publicKey: Uint8Array;
+}
+
+/**
+ * Delegation payload: the canonical JSON structure that root signs.
+ * All binary fields are base64url strings.
+ */
+export interface DelegationPayload {
+  version: 2;
+  /** base64url Ed25519 root public key (32 bytes) */
+  root_public_key: string;
+  /** base64url Ristretto255 device public key (32 bytes) */
+  device_public_key: string;
+  /** Optional human-readable device label (e.g. "iPhone 14 Pro") */
+  device_id?: string;
+  /** Optional application-specific JSON metadata */
+  metadata?: Record<string, unknown>;
+  /** Unix timestamp (ms) when the delegation was created */
+  created_at: number;
+  /** Optional Unix timestamp (ms) after which the delegation expires */
+  expires_at?: number;
+}
+
+/**
+ * Device delegation envelope.
+ * Root signs this to authorize a device Ristretto255 public key.
+ * Contains no secrets; safe to send over any channel.
+ */
+export interface DeviceDelegation {
+  version: 2;
+  type: 'device-delegation';
+  /** The signed payload */
+  payload: DelegationPayload;
+  /**
+   * base64url Ed25519 signature (64 bytes) by root private key over the
+   * domain-separated canonical JSON encoding of `payload`.
+   *
+   * Signing format: uint8(domain_len) ‖ domain_bytes ‖ canonical_json(payload)
+   * Domain: 'zkp-browser/v2/device-delegation'
+   */
+  signature: string;
+}
+
+/** Options for `createDeviceDelegation`. */
+export interface DeviceDelegationOptions {
+  /** Optional human-readable device label (e.g. "iPhone 14 Pro") */
+  deviceId?: string;
+  /** Optional application-specific metadata (must be JSON-serializable) */
+  metadata?: Record<string, unknown>;
+  /** Delegation expiry as Unix timestamp (ms); omit for no expiry enforcement */
+  expiresAt?: number;
+  /** Override creation timestamp (defaults to Date.now()); useful for tests */
+  createdAt?: number;
+}
+
+/**
+ * Device proof envelope.
+ * Device 2 creates this to authenticate to a verifier using its signed delegation.
+ */
+export interface DeviceProof {
+  version: 2;
+  type: 'device-proof';
+  /** Signed delegation authorizing this device's Ristretto255 key */
+  delegation: DeviceDelegation;
+  /**
+   * Ristretto255 Schnorr proof of device private key knowledge.
+   * Message = SHA-512(uint8(domain_len) ‖ domain ‖ canonical_json(delegation) ‖ challenge)
+   * Domain: 'zkp-browser/v2/device-proof'
+   */
+  proof: SchnorrProofJson;
+  /** base64url verifier-issued challenge (prevents replay) */
+  challenge: string;
+  /** Unix timestamp (ms) when the proof was created */
+  created_at: number;
+}

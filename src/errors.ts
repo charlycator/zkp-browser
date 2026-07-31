@@ -50,3 +50,11 @@ export class InvalidPayloadError extends ZkpError {
     this.name = 'InvalidPayloadError';
   }
 }
+
+/** Delegation envelope is malformed, signature is invalid, or device key mismatch. */
+export class InvalidDelegationError extends ZkpError {
+  constructor(message: string, options?: ZkpErrorInit) {
+    super(message, options);
+    this.name = 'InvalidDelegationError';
+  }
+}

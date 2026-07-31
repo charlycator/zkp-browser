@@ -9,6 +9,7 @@ Works in Node.js (16+) and modern browsers. Ships as both CommonJS (`dist/index.
 
 - [Cryptography overview](#cryptography-overview)
 - [Offline device-to-device sync](#offline-device-to-device-sync)
+- [Per-device identity (v2)](#per-device-identity-v2)
 - [Security model](#security-model)
 - [API reference](#api-reference)
 - [Quick start](#quick-start)
@@ -52,8 +53,9 @@ The demo supports both copy/paste and QR codes. Use **Show pairing QR** and
 with the camera. Camera access requires `localhost` or HTTPS and browser
 permission. The demo exercises separate browser LocalStorage instances,
 passphrase derivation, challenge-bound proof generation and verification, and
-an AES-GCM-encrypted JSON transfer. WebRTC is not included; it is an
-alternative transport for production deployment.
+an AES-GCM-encrypted JSON transfer. A separate **Per-Device Identity (v2)**
+section demonstrates root-key delegation to a per-device key. WebRTC is not
+included; it is an alternative transport for production deployment.
 
 ---
 
@@ -267,10 +269,122 @@ appropriate.
 
 ---
 
+## Per-device identity (v2)
+
+v2 adds a backward-compatible per-device identity mode. Instead of copying the
+same private key to every device, Device 1 keeps a long-term **Ed25519 root
+key** and signs a **delegation** for each device's own **Ristretto255** key.
+Authentication still uses the existing Schnorr proof machinery, but each device
+now proves possession of its *own* private key.
+
+### Overview
+
+- **Root identity:** Ed25519 key pair on Device 1 only.
+- **Per-device keys:** Ristretto255 key pairs, one per browser/device.
+- **Delegation:** root signs canonical JSON authorizing a device public key.
+- **Authentication:** device creates a Schnorr proof bound to both the signed
+  delegation and the verifier's fresh challenge.
+
+This gives a QR-friendly enrollment flow without ever sending the root private
+key to a second device.
+
+### First-time new-device enrollment flow
+
+1. **Device 2** generates a fresh device key:
+
+   ```ts
+   const device = generateDeviceKeyPair()
+   ```
+
+2. **Device 2** sends Device 1 its `device.publicKey` plus an optional
+   human-readable label and metadata via QR, copy/paste, or another local
+   channel.
+
+3. **Device 1** signs a delegation with the root private key:
+
+   ```ts
+   const root = generateRootKeyPair()
+   const delegation = createDeviceDelegation(root.privateKey, device.publicKey, {
+     deviceId: 'iPhone 14 Pro',
+     metadata: { platform: 'ios' },
+     expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+   })
+   ```
+
+4. **Device 1** sends the signed `delegation` back to Device 2.
+5. **Device 2** stores its device private key and the signed delegation.
+
+The exchange is QR-code friendly because the enrollment request and delegation
+are plain JSON with base64url-encoded binary fields.
+
+### Authentication flow
+
+1. **Verifier** issues a fresh unpredictable challenge.
+2. **Device 2** creates a proof bound to both the challenge and its signed
+   delegation:
+
+   ```ts
+   const challenge = crypto.getRandomValues(new Uint8Array(32))
+   const proof = createDeviceProof(device.privateKey, delegation, challenge)
+   ```
+
+3. **Verifier** checks the root signature, optional expiry, and device proof:
+
+   ```ts
+   const ok = verifyDeviceProof(root.publicKey, proof, challenge)
+   ```
+
+4. After success, the verifier must mark the challenge consumed to prevent
+   replay.
+
+### Revocation guidance
+
+Revocation is application-level. Keep a persistent set of revoked device public
+keys and check it after `verifyDeviceProof` succeeds:
+
+```ts
+const revokedKeys = new Set<string>(loadRevokedKeysFromStorage())
+const ok = verifyDeviceProof(root.publicKey, proof, challenge)
+  && !isDelegationRevoked(proof.delegation, revokedKeys)
+```
+
+To revoke a device, add `delegation.payload.device_public_key` to the set.
+For time-bounded trust, also set `expiresAt` when creating the delegation.
+
+### v2 API reference
+
+```ts
+import {
+  generateRootKeyPair,
+  generateDeviceKeyPair,
+  createDeviceDelegation,
+  verifyDeviceDelegation,
+  createDeviceProof,
+  verifyDeviceProof,
+  isDelegationRevoked,
+} from 'zkp-browser'
+```
+
+- `generateRootKeyPair() → RootKeyPair` — creates the Ed25519 root key pair.
+- `generateDeviceKeyPair() → KeyPair` — creates a Ristretto255 device key pair.
+- `createDeviceDelegation(rootPrivKey, devicePublicKey, options?) → DeviceDelegation`
+- `verifyDeviceDelegation(rootPublicKey, delegation) → boolean`
+- `createDeviceProof(devicePrivKey, delegation, challenge) → DeviceProof`
+- `verifyDeviceProof(rootPublicKey, deviceProof, challenge) → boolean`
+- `isDelegationRevoked(delegation, revokedKeys) → boolean`
+
+### Demo note
+
+The original browser pairing flow in the demo is **v1** (shared identity via
+passphrase-derived pairing). The new **Per-Device Identity (v2)** section shows
+root-key delegation and challenge-bound device proofs.
+
+---
+
 ## Security model
 
-- **Verifier trusts the stored public key.** The verifier must obtain the user's public key through a trusted channel (registration, PKI, etc.) and use that stored copy — not the `public_key` field inside a proof envelope, which is informational only.
-- **Devices share the same identity private key (v1).** Multi-device synchronisation via the key-transfer mechanism or passphrase derivation.
+- **Verifier trusts the stored public key.** In v1 this is the user's stored Ristretto255 public key; in v2 it is the stored Ed25519 root public key. Never trust keys carried only inside envelopes.
+- **v1 and v2 trust models differ.** v1 shares one identity private key across devices via passphrase derivation or one-time transfer. v2 keeps the root private key on Device 1 and delegates distinct per-device Ristretto255 keys.
 - **Hidden commitments are not proven until opened.** The `HiddenCommitment` envelope proves the prover's *identity* at commit time but does **not** prove the JSON content until `verifyOpenedCommitment` is called with the opening key.
 - **Passphrase-derived keys require the salt.** Store `DerivedKeyResult.salt` alongside the user record; without it the key cannot be re-derived.
 - **Never persist the passphrase in `localStorage`.** Ask for it when unlocking the app, then derive or decrypt the identity key in memory.
@@ -412,7 +526,7 @@ canonicalJson({ b: 2, a: 1 }); // → '{"a":1,"b":2}'
 All errors extend `ZkpError`. Import and check with `instanceof`:
 
 ```ts
-import { InvalidKeyError, InvalidProofError, InvalidCommitmentError, InvalidPayloadError } from 'zkp-browser';
+import { InvalidKeyError, InvalidProofError, InvalidCommitmentError, InvalidPayloadError, InvalidDelegationError } from 'zkp-browser';
 ```
 
 ---
@@ -453,8 +567,8 @@ console.log(verifyOpenedCommitment(publicKey, envelope, openingKey)); // true
 
 ## Security notes and caveats
 
-- **This is v1 software.** It has not undergone a formal third-party security audit. Use in production at your own risk.
-- **Single private key per identity (v1).** All devices for a user share the same private key. Future versions may support per-device keys with linkable proofs.
+- **This software has not undergone a formal third-party security audit.** Use in production at your own risk.
+- **Choose the right mode.** v1 is simpler but shares one private key across devices. v2 reduces key-sharing by using an Ed25519 root plus per-device Ristretto255 keys.
 - **Replay protection is challenge-driven.** The verifier must generate a fresh unpredictable challenge, verify against that exact challenge, and mark it consumed. The library binds the challenge into the proof but cannot maintain the verifier's replay cache.
 - **Proof envelopes include `public_key` for convenience.** Always verify against your *stored* public key, not the one in the envelope.
 - **Passphrase entropy matters.** The PBKDF2 work factor protects against offline brute-force, but a weak passphrase is still weak. Use a passphrase manager or diceware.

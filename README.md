@@ -26,18 +26,21 @@ npm install
 npm run demo
 ```
 
-Open <http://localhost:4173/demo/>. Click the buttons in this order:
+Open <http://localhost:4173/demo/> in **two separate browsers** (or two private
+windows). Use the same passphrase in both. Perform these steps:
 
-1. **Create Device 1 identity**
-2. **Create sample Device 1 data**
-3. **Ask Device 1 to trust Device 2**
-4. **Transfer data after trust**
+1. In Browser 1, click **Create Device 1 identity** and **Create sample data**.
+2. In Browser 1, click **Create pairing request**, then copy its JSON.
+3. In Browser 2, paste the request and click **Create proof**.
+4. Copy Browser 2's proof response into Browser 1 and click **Verify Device 2**.
+5. In Browser 1, click **Export data after trust**.
+6. Copy the encrypted export into Browser 2 and click **Decrypt and import data**.
 
-The demo simulates two devices using `demo:device1:*` and `demo:device2:*`
-LocalStorage prefixes in one browser. It exercises passphrase derivation,
-challenge-bound proof generation and verification, and post-verification JSON
-transfer. It does not simulate QR encoding or WebRTC. Those are application
-transport layers that should be added for a real multi-device deployment.
+The demo uses copy/paste as a stand-in for QR codes or a local pairing
+channel. It exercises separate browser LocalStorage instances, passphrase
+derivation, challenge-bound proof generation and verification, and an
+AES-GCM-encrypted JSON transfer. It does not implement QR encoding or WebRTC;
+those are application transport layers for production deployment.
 
 ---
 

@@ -3,48 +3,70 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>zkp-browser device demo</title>
+    <title>zkp-browser two-browser demo</title>
     <style>
-      body { font: 16px system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+      body { font: 16px system-ui, sans-serif; max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
       section { border: 1px solid #ccc; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
       button { cursor: pointer; margin: .25rem .5rem .25rem 0; padding: .5rem .75rem; }
-      code, pre { background: #f4f4f4; padding: .75rem; border-radius: 4px; overflow: auto; }
+      textarea { box-sizing: border-box; min-height: 120px; width: 100%; }
+      input { max-width: 100%; }
+      pre { background: #f4f4f4; padding: .75rem; border-radius: 4px; overflow: auto; white-space: pre-wrap; }
       .warning { color: #8a4b00; }
-      #status { white-space: pre-wrap; }
+      [hidden] { display: none; }
     </style>
   </head>
   <body>
-    <h1>zkp-browser device trust demo</h1>
+    <h1>zkp-browser two-browser demo</h1>
     <p>
-      This page simulates two devices with separate LocalStorage namespaces.
-      It derives the same identity from a passphrase, proves Device 2 knows the
-      identity secret, then transfers JSON after verification.
+      Open this URL in two separate browsers or private windows. Device 1 and
+      Device 2 exchange JSON envelopes manually, like scanning QR codes or
+      copying through a local pairing channel.
     </p>
     <p class="warning">
-      Demo only: this stores a private key in LocalStorage and copies data
-      directly. Production apps need encrypted storage and QR/WebRTC transport.
+      Demo only: the private key is stored in LocalStorage for visibility.
+      Production apps need encrypted key storage and real QR/WebRTC transport.
     </p>
 
     <section>
-      <h2>1. Device 1</h2>
+      <h2>Device 1 — trusted source</h2>
+      <button id="device1-setup">Create Device 1 identity</button>
+      <button id="device1-data">Create sample data</button>
+      <button id="device1-request">Create pairing request</button>
+      <label>Pairing request to copy into Device 2
+        <textarea id="pairing-request" readonly></textarea>
+      </label>
+      <label>Proof response from Device 2
+        <textarea id="proof-response"></textarea>
+      </label>
+      <button id="device1-verify">Verify Device 2</button>
+      <label>Encrypted data export to copy into Device 2
+        <textarea id="data-export" readonly></textarea>
+      </label>
+      <button id="device1-export" disabled>Export data after trust</button>
+    </section>
+
+    <section>
+      <h2>Device 2 — importing browser</h2>
       <label>Shared passphrase
         <input id="passphrase" type="password" value="demo-only-long-passphrase">
       </label>
-      <button id="setup">Create Device 1 identity</button>
-      <button id="seed-data">Create sample Device 1 data</button>
+      <label>Pairing request from Device 1
+        <textarea id="pairing-input"></textarea>
+      </label>
+      <button id="device2-prove">Create proof</button>
+      <label>Proof response to copy into Device 1
+        <textarea id="proof-output" readonly></textarea>
+      </label>
+      <label>Encrypted data export from Device 1
+        <textarea id="export-input"></textarea>
+      </label>
+      <button id="device2-import">Decrypt and import data</button>
     </section>
 
     <section>
-      <h2>2. Device 2 pairing</h2>
-      <button id="pair">Ask Device 1 to trust Device 2</button>
-      <button id="transfer" disabled>Transfer data after trust</button>
-    </section>
-
-    <section>
-      <h2>Result</h2>
+      <h2>Log</h2>
       <pre id="status">Ready.</pre>
     </section>
-
     <script type="module" src="./app.js"></script>
   </body>
 </html>
